@@ -1,4 +1,3 @@
-
 from flask import Flask ,jsonify, request,redirect,url_for,session, render_template
 from flask_dance.contrib.google import make_google_blueprint ,google
 from flask_cors import CORS
@@ -51,17 +50,13 @@ DB_URL = os.getenv("DATABASE_URL")
 if DB_URL and DB_URL.startswith("postgres://"):
     DB_URL = DB_URL.replace("postgres://", "postgresql://", 1)
 
-# 3. Fallback to your local sqlite if no URL is found
 final_db_url = DB_URL or 'sqlite:///outages.db'
 
-# 4. Create the engine
 engine = create_engine(final_db_url)
 
-# 5. Create the tables (This tells Postgres/SQLite to build the columns)
 Base.metadata.create_all(engine)
 
-# 6. Create the Session factory
-Session = sessionmaker(bind=engine)
+SessionLocal = sessionmaker(bind=engine)
 
 
 
@@ -78,7 +73,7 @@ scheduler.add_job(
     id='full_pipeline_job',
     func=run_full_outage_pipeline, 
     kwargs={
-        "session":Session,
+        "session":SessionLocal,
         'SENDER_EMAIL': SENDER_EMAIL,
         'SENDER_PASSWORD': SENDER_PASSWORD,
         'SMTP_SERVER': SMTP_SERVER,
@@ -114,9 +109,9 @@ def index():
 
 @app.route('/api/outages')
 def get_outages():
-    session =Session()
+    db_session = SessionLocal()
     try:
-        outages = session.query(Outage).all() #returns list of Outage objects
+        outages = db_session.query(Outage).all() #returns list of Outage objects
         
         outages_list = []
         for outage in outages:
@@ -137,7 +132,7 @@ def get_outages():
         print(f"Database Error: {e}")
         return jsonify({'error':'Couldnt retrieve outage data.'}), 500
     finally:
-        session.close()
+        db_session.close()
 
 @app.route("/api/register", methods = ['POST'])
 def register_user():
@@ -154,10 +149,10 @@ def register_user():
     latitude = data['latitude']
     longitude = data['longitude']
 
-    session = Session()
+    db_session = SessionLocal()
 
     try:
-        existing_user = session.query(User).filter_by(email = email).first()
+        existing_user = db_session.query(User).filter_by(email = email).first()
         if existing_user:
             return jsonify({"message":"User withthis email already exists."}), 409 #409 = Confilct
 
@@ -168,21 +163,21 @@ def register_user():
         )
         new_user.set_password(password)
 
-        session.add(new_user)
-        session.commit()
+        db_session.add(new_user)
+        db_session.commit()
 
         return jsonify({"message":"Registration Successful!",'user_id':new_user.id}), 201
     
     except IntegrityError: #oomly when non unique email is used
-        session.rollback()
+        db_session.rollback()
         return jsonify({"status": "ERROR", "message": "Email already registered. Please Try a different email."}), 409 #conflict
     
     except Exception as e:
-        session.rollback()
+        db_session.rollback()
         print(f"Registration Error: {e}")
         return jsonify({"status": "ERROR", "message": "Internal server error during registration."}), 500
     finally:
-        session.close()
+        db_session.close()
 
 @app.route('/api/check_outage',methods=["GET"])
 def check_outage_query():
@@ -197,11 +192,11 @@ def check_outage_query():
     except ValueError:
         return jsonify({"status": "ERROR", "message": "Latitude and longitude must be valid numbers."}), 400
 
-    session = Session()
+    db_session = SessionLocal()
     proximate_outages = []
 
     try:
-        outages = session.query(Outage).all()
+        outages = db_session.query(Outage).all()
         
         for outage in outages:
             sub_areas_list = outage.sub_areas.split(', ') if outage.sub_areas else []
@@ -247,7 +242,7 @@ def check_outage_query():
         return jsonify({"status": "ERROR", "message": "Internal error during outage check. See server console for details."}), 500
         
     finally:
-        session.close()
+        db_session.close()
 
 @app.route("/google/authorized")
 def google_authorized():
@@ -266,18 +261,18 @@ def google_authorized():
         print(f"Failed to fethc user inof form google: {e}")
         return jsonify({"status":"ERROR","message":"Failed to retrieve user data form google."}), 500
     
-    session_db= Session()
+    db_session= SessionLocal()
 
     try:
-        user = session_db.query(User).filter_by(email=email).first()
+        user = db_session.query(User).filter_by(email=email).first()
         if user is None:
             new_user = User(
                 email=email,
                 is_subscribed = False,
                 name= full_name
             )
-            session_db.add(new_user)
-            session_db.commit()
+            db_session.add(new_user)
+            db_session.commit()
 
             user = new_user
             print(f"New user created: {email}, pending setup: {full_name}")
@@ -297,21 +292,21 @@ def google_authorized():
         
 
     except Exception as e:
-        session_db.rollback()
+        db_session.rollback()
         print(f"Database error during Google login: {e}")
         return jsonify({"status": "ERROR", "message": "Internal database error during login."}), 500
     
     finally:
-        session_db.close()
+        db_session.close()
     
 @app.route('/setup_location', methods=['GET', 'POST'])
 def setup_location():
     if 'user_id' not in session:
         return redirect(url_for('login'))
         
-    session_db = Session()
+    db_session = SessionLocal()
     try:
-        user = session_db.query(User).filter_by(id=session['user_id']).one()
+        user = db_session.query(User).filter_by(id=session['user_id']).one()
 
         if request.method == 'POST':
             lat = request.json.get('latitude')
@@ -336,7 +331,7 @@ def setup_location():
 
 
             
-                session_db.commit()
+                db_session.commit()
                 return jsonify({"status": "SUCCESS", "message": "Location and Preferences saved!"}), 200
             else:
                 return jsonify({"status": "ERROR", "message": "Missing location data."}), 400
@@ -346,11 +341,11 @@ def setup_location():
     except NoResultFound:
         return redirect(url_for('logout'))
     except Exception as e:
-        session_db.rollback()
+        db_session.rollback()
         print(f"Location setup error: {e}")
         return jsonify({"status": "ERROR", "message": "Internal error."}), 500
     finally:
-        session_db.close()
+        db_session.close()
 
 @app.route("/login")
 def login():
@@ -368,9 +363,9 @@ def profile_management():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    session_db = Session()
+    db_session = SessionLocal()
     try:
-        user = session_db.query(User).filter_by(id=session['user_id']).one()
+        user = db_session.query(User).filter_by(id=session['user_id']).one()
         print(user)
         
         if request.method == 'POST':
@@ -384,7 +379,7 @@ def profile_management():
                 user.latitude = float(lat)
                 user.longitude = float(lon)
             
-            session_db.commit()
+            db_session.commit()
             
             session['is_subscribed'] = user.is_subscribed
 
@@ -396,11 +391,11 @@ def profile_management():
     except NoResultFound:
         return redirect(url_for('logout'))
     except Exception as e:
-        session_db.rollback()
+        db_session.rollback()
         print(f"Profile management error: {e}")
         return jsonify({"status": "ERROR", "message": f"Internal error.{e}"}), 500
     finally:
-        session_db.close()
+        db_session.close()
 
 @app.route('/delete_account', methods=['POST'])
 
@@ -408,12 +403,12 @@ def delete_account():
     if 'user_id' not in session:
         return jsonify({"status": "ERROR", "message": "Not logged in"}), 401
 
-    session_db = Session()
+    db_session = SessionLocal()
     try:
-        user = session_db.query(User).filter_by(id=session['user_id']).one()
+        user = db_session.query(User).filter_by(id=session['user_id']).one()
         
-        session_db.delete(user)
-        session_db.commit()
+        db_session.delete(user)
+        db_session.commit()
         
         session.clear()
 
@@ -423,16 +418,16 @@ def delete_account():
         session.clear()
         return jsonify({"status": "ERROR", "message": "User not found."}), 404
     except Exception as e:
-        session_db.rollback()
+        db_session.rollback()
         print(f"Account deletion error: {e}")
         return jsonify({"status": "ERROR", "message": "Internal error."}), 500
     finally:
-        session_db.close()
+        db_session.close()
 
 
-with Session() as session: 
+with SessionLocal() as initial_session: 
     run_full_outage_pipeline(
-        session=session, 
+        session=initial_session, 
         SENDER_EMAIL=SENDER_EMAIL,
         SENDER_PASSWORD=SENDER_PASSWORD,
         SMTP_SERVER=SMTP_SERVER,
