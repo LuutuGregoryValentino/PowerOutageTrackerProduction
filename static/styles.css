@@ -1,0 +1,194 @@
+/* styles.css (Updated for premium tables and better layout organization) */
+
+/* --- Neutral UI Colors --- */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #F8F9FA; /* Light Gray */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+.container {
+    background: #FFFFFF; /* White */
+    padding: 30px; /* Increased padding */
+    border-radius: 12px; /* Slightly larger border-radius */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); /* Deeper shadow */
+    width: 85%; /* Slightly wider container */
+    max-width: 1200px; /* Add a max-width for large screens */
+    min-height: 60vh;
+}
+h2 {
+    text-align: center;
+    color: #212529; /* Almost Black (Primary text) */
+    margin-bottom: 30px;
+}
+
+/* 🚀 Header & Navigation (Improved Organization) */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #DEE2E6; /* Slightly thicker line */
+    padding-bottom: 15px;
+    margin-bottom: 30px;
+}
+header a {
+    text-decoration: none;
+    color: #0B5ED7; /* Deep Utility Blue (Primary brand color) */
+    font-weight: bold;
+    padding: 5px 10px; /* Give links some space */
+    transition: color 0.2s;
+}
+header a:hover {
+    color: #1F2A44; /* Dark Slate Blue on hover */
+}
+.auth-links {
+    /* Group sign-in/subscribe links */
+    display: flex;
+    gap: 15px;
+}
+
+
+/* --- Buttons (Primary & Accent) --- */
+.personal-check {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+#checkMyAreaBtn, #resetBtn {
+    padding: 14px 25px; /* Larger buttons */
+    background-color: #F5B301; /* Amber / Power Yellow */
+    color: #212529;
+    border: none;
+    border-radius: 8px; /* Slightly more rounded */
+    cursor: pointer;
+    font-size: 17px;
+    margin: 5px;
+    transition: background-color 0.2s, transform 0.1s;
+}
+#checkMyAreaBtn:hover, #resetBtn:hover {
+    background-color: #e6a500; /* Darker yellow on hover */
+    transform: translateY(-1px); /* Slight lift effect */
+}
+
+
+/* 🏆 Premium Table Styling */
+table {
+    color: rgb(4, 31, 53);
+    width: 100%;
+    border-collapse: separate; /* Required for border-radius on table */
+    border-spacing: 0;
+    border-radius: 8px; /* Rounded corners for the entire table */
+    overflow: hidden; /* Ensures borders/corners are respected */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Very light table shadow */
+    margin-top: 20px;
+}
+th, td {
+    padding: 15px; /* Increased vertical padding */
+    border: none; /* Remove individual cell borders */
+    border-bottom: 1px solid #DEE2E6; /* Only soft separators between rows */
+    text-align: left;
+}
+th {
+    background-color: #445b91; /* Dark Slate Blue (Secondary brand color) */
+    color: white; /* White text on dark header */
+    font-weight: 600; /* Medium bold */
+    text-transform: uppercase;
+    font-size: 0.9em;
+}
+
+/* Remove bottom border from the last row */
+tr:last-child td {
+    border-bottom: none;
+}
+
+/* Hover effect for data rows */
+tbody tr:hover {
+    background-color: #F0F2F5; /* Light hover background */
+    cursor: default;
+}
+
+.status-message {
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 4px;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+  width: 65%;
+  min-width: 65%;
+}
+-webkit-
+.expanded-content {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+
+/* --- Menu Button / Dropdown --- */
+.menu-container {
+    position: relative;
+    display: inline-block;
+    margin-left: 15px; /* Separate from auth links */
+}
+
+.menu-button {
+    background-color: #0B5ED7; /* Deep Utility Blue */
+    color: white;
+    padding: 10px 18px; /* Slightly larger button */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: background-color 0.2s;
+}
+.menu-button:hover {
+    background-color: #084cba;
+}
+
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #FFFFFF;
+    min-width: 180px; /* Slightly wider dropdown */
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 100; /* Higher z-index */
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.dropdown-content a {
+    color: #212529;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    font-size: 14px;
+}
+
+.dropdown-content a:hover {
+    background-color: #F8F9FA;
+    color: #0B5ED7;
+}
+
+.show {
+    display: block;
+}
+
+/* --- Highlighting & Status Colors --- */
+.highlight {
+    background-color: #FFF3CD; /* Light Amber (Soft highlight) */
+    color: #212529;
+    font-weight: bold;
+    padding: 2px 4px; /* Added horizontal padding */
+    border-radius: 4px;
+}
+
+/* Status colors (Red, Orange, Green) */
+.status-outage { background-color: #DC3545; color: white; }
+.status-warning { background-color: #FD7E14; color: #212529; } /* Dark text for contrast on Orange */
+.status-normal { background-color: #198754; color: white; }

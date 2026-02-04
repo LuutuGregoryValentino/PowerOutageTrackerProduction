@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Settings | Power Alert</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .container { max-width: 600px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
+        .form-group input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .current-coords { background-color: #f0f0f0; padding: 10px; border-radius: 4px; margin-top: 5px; }
+        #deleteAccountBtn { background-color: #dc3545; color: white; border: none; }
+        .info-box { background-color: #e9ecef; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>👤 Profile & Settings</h2>
+        <p class="info-box">
+            Logged in as: <strong>{{ user.name or user.email}}</strong> ({{ user.email }})
+        </p>
+
+        <form id="profileUpdateForm">
+            <h3>Email Alerts</h3>
+            <div class="form-group">
+                <input type="checkbox" id="isSubscribed" name="isSubscribed" {% if user.is_subscribed %}checked{% endif %}>
+                <label for="isSubscribed" style="display: inline-block;">I want to receive automated email alerts for my area.</label>
+            </div>
+
+            <h3>Contact Information</h3>
+            <div class="form-group">
+                <label for="phone">Phone Number (Optional for future SMS alerts)</label>
+                <input type="text" id="phone" value="{{ user.phone_number or '' }}" placeholder="e.g., +256 700 123456">
+            </div>
+
+            <h3>Location Settings</h3>
+            <div class="form-group">
+                <label>Current Location:</label>
+                <div class="current-coords">
+                    Lat: <span id="currentLat">{{ user.latitude or 'Not Set' }}</span>, 
+                    Lon: <span id="currentLon">{{ user.longitude or 'Not Set' }}</span>
+                </div>
+                <button type="button" id="updateLocationBtn" style="margin-top: 10px;">Update My Current Coordinates</button>
+                <p id="coordStatus" style="color: red;"></p>
+                <input type="hidden" id="latitude">
+                <input type="hidden" id="longitude">
+            </div>
+
+            <button type="submit" id="saveProfileBtn">Save Profile Changes</button>
+            <p id="statusMessage" class="status-message" style="margin-top: 15px;"></p>
+        </form>
+
+        <hr style="margin: 30px 0;">
+
+        <h3>Danger Zone</h3>
+        <p>Permanently delete your account and all associated data.</p>
+        <button type="button" id="deleteAccountBtn">Delete My Account</button>
+        
+        <p style="margin-top: 20px;"><a href="{{ url_for('index') }}">← Back to Outage Status</a></p>
+    </div>
+
+    <script>
+        console.log("script loaded");
+        
+        // --- JavaScript Logic for Profile Management ---
+        const form = document.getElementById('profileUpdateForm');
+        const saveBtn = document.getElementById('saveProfileBtn');
+        const updateLocationBtn = document.getElementById('updateLocationBtn');
+        const deleteBtn = document.getElementById('deleteAccountBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const coordStatus = document.getElementById('coordStatus');
+        const latInput = document.getElementById('latitude');
+        const lonInput = document.getElementById('longitude');
+        const currentLatSpan = document.getElementById('currentLat');
+        const currentLonSpan = document.getElementById('currentLon');
+        const isSubscribedCheckbox = document.getElementById('isSubscribed');
+        const phoneInput = document.getElementById('phone');
+
+        let newLat = {{ (user.latitude or None ) | tojson }};
+        let newLon = {{ (user.longitude or None ) | tojson }};
+
+        console.log(newLat,newLon)
+
+        updateLocationBtn.addEventListener('click', () => {
+            coordStatus.textContent = 'Attempting to fetch location...';
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        newLat = position.coords.latitude;
+                        newLon = position.coords.longitude;
+                        
+                        currentLatSpan.textContent = newLat.toFixed(6);
+                        currentLonSpan.textContent = newLon.toFixed(6);
+                        latInput.value = newLat.toFixed(6);
+                        lonInput.value = newLon.toFixed(6);
+                        
+                        coordStatus.textContent = 'New coordinates fetched!';
+                        coordStatus.style.color = 'green';
+                    },
+                    (error) => {
+                        coordStatus.textContent = `Error: ${error.message}. Please try again.`;
+                        coordStatus.style.color = 'red';
+                    }
+                );
+            } else {
+                coordStatus.textContent = 'Geolocation not supported by your browser.';
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            statusMessage.textContent = 'Saving changes...';
+            statusMessage.style.color = 'black';
+
+            const data = {
+                is_subscribed: isSubscribedCheckbox.checked,
+                phone_number: phoneInput.value,
+                latitude: newLat,
+                longitude: newLon
+            };
+
+            try {
+                const response = await fetch('/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (response.ok && result.status === 'SUCCESS') {
+                    statusMessage.textContent = result.message;
+                    statusMessage.style.color = 'green';
+                } else {
+                    statusMessage.textContent = `Error: ${result.message}`;
+                    statusMessage.style.color = 'red';
+                }
+            } catch (error) {
+                statusMessage.textContent = 'Network error while saving profile.';
+                statusMessage.style.color = 'red';
+            }
+        });
+
+        deleteBtn.addEventListener('click', async () => {
+            if (!confirm("ARE YOU SURE YOU WANT TO DELETE YOUR ACCOUNT? This action is permanent. You can turn off automated email alerts to stop receiving outage notifications  ")) {
+                return;
+            }
+            
+            statusMessage.textContent = 'Deleting account...';
+            
+            try {
+                const response = await fetch('/delete_account', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+
+                if (response.ok && result.status === 'SUCCESS') {
+                    alert("Sad to see you go; Account successfully deleted!");
+                    window.location.href = '/'; // Redirect to home/login page
+                } else {
+                    statusMessage.textContent = `Error deleting account: ${result.message}`;
+                }
+            } catch (error) {
+                statusMessage.textContent = 'Network error during deletion.';
+            }
+        });
+    </script>
+</body>
+</html>

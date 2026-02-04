@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Location | Power Alert</title>
+    <link rel="stylesheet" href="{{ url_for('static',filename='styles.css') }}"> 
+    <style>
+        /* Specific style for this small page */
+        .container { width: 450px; text-align: center; }
+        .location-inputs { display: flex; gap: 10px; margin-top: 10px; }
+        .location-inputs input { width: 50%; }
+        #statusMessage { min-height: 40px; } /* Ensures space is always reserved */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📍 Welcome! Set Your Alert Location</h2>
+        <p>This is the final step! We need your location to know which outage alerts to send to your email ({{ session.get('email') }}).</p>
+        
+        <form id="locationSetupForm">
+            <label>1. Click the button to fetch your current coordinates.</label>
+            <button type="button" id="getLocationManually" style="margin-bottom: 20px;">Get Current Location</button>
+
+            <div class="location-inputs">
+                <input type="text" id="latitude" placeholder="Latitude" readonly required>
+                <input type="text" id="longitude" placeholder="Longitude" readonly required>
+            </div>
+
+                <label for="phone">Phone Number (Optional)</label><br>
+            <input type="text" id="phone" placeholder="Whatsapp ">
+
+            <div style="text-align: left; margin-top: 15px;">
+                <input type="checkbox" id="isSubscribed" checked>
+                <label for="isSubscribed" style="display: inline-block; font-weight: normal;">Yes, I want to receive automated email alerts.</label>
+            </div>
+                
+                <button type="submit" id="saveLocationBtn" disabled>2. Save Location and Go to Alerts</button>
+        </form>
+        
+        <div id="statusMessage" class="status-message">Awaiting location fetch...</div>
+    </div>
+    
+    <script>
+        const getLocationManuallyBtn = document.getElementById('getLocationManually');
+        const saveLocationBtn = document.getElementById('saveLocationBtn');
+        const latitudeInput = document.getElementById('latitude');
+        const longitudeInput = document.getElementById('longitude');
+        const statusMessage = document.getElementById('statusMessage');
+        const form = document.getElementById('locationSetupForm');
+        const phoneInput = document.getElementById('phone');
+        const isSubscribedCheckbox = document.getElementById('isSubscribed');
+
+
+        let userLat = null;
+        let userLon = null;
+
+        //location fetching 
+        function getLocation() {
+            statusMessage.textContent = 'Attempting to fetch your location...';
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        userLat = position.coords.latitude;
+                        userLon = position.coords.longitude;
+
+                        latitudeInput.value = userLat.toFixed(6);
+                        longitudeInput.value = userLon.toFixed(6);
+
+                        statusMessage.textContent = 'Location successfully fetched. Click "Save Location".';
+                        statusMessage.style.backgroundColor = '#d4edda';
+                        statusMessage.style.color = '#155724';
+                        saveLocationBtn.disabled = false;
+                    },
+                    (error) => {
+                        const msg = (error.code === error.PERMISSION_DENIED) 
+                            ? 'Error: Location access denied. Please allow location access.'
+                            : `Error getting location: ${error.message}`;
+
+                        statusMessage.textContent = msg;
+                        statusMessage.style.backgroundColor = '#f8d7da';
+                        statusMessage.style.color = '#721c24';
+                        saveLocationBtn.disabled = true;
+                    }
+                );
+            } else {
+                statusMessage.textContent = 'Geolocation is not supported by this browser.';
+                saveLocationBtn.disabled = true;
+            }
+        }
+        
+        //saving location in backend
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (userLat === null || userLon === null) {
+                statusMessage.textContent = 'Please fetch your location first.';
+                return;
+            }
+
+            statusMessage.textContent = 'Saving location...';
+            
+            const data = {
+                latitude: userLat,
+                longitude: userLon,
+                phone_number: phoneInput.value,
+                is_subscribed: isSubscribedCheckbox.checked
+            };
+            console.log(data);
+            
+
+            try {
+                // POST request to the /setup_location route in app.py
+                const response = await fetch('/setup_location', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'SUCCESS') {
+                    statusMessage.textContent = 'Location saved! Redirecting to the main status page...';
+                    statusMessage.style.backgroundColor = '#d4edda';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/'; 
+                    }, 1500); 
+
+                } else {
+                    statusMessage.textContent = `Error saving: ${result.message || 'Server error.'}`;
+                    statusMessage.style.backgroundColor = '#f8d7da';
+                }
+
+            } catch (error) {
+                statusMessage.textContent = 'Could not connect to the server.';
+                statusMessage.style.backgroundColor = '#f8d7da';
+            }
+        });
+
+        getLocationManuallyBtn.addEventListener('click', getLocation);
+    </script>
+</body>
+</html>
