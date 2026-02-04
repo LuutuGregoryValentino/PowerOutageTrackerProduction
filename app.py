@@ -431,7 +431,7 @@ def delete_account():
 
 
 run_full_outage_pipeline(
-        session=Session,
+        session=Session(),
         SENDER_EMAIL= SENDER_EMAIL,
         SENDER_PASSWORD= SENDER_PASSWORD,
         SMTP_SERVER= SMTP_SERVER,
