@@ -94,7 +94,7 @@ scheduler.add_job(
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
 
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+# os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '0'
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 google_blueprint = make_google_blueprint(
