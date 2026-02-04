@@ -430,12 +430,15 @@ def delete_account():
         session_db.close()
 
 
-run_full_outage_pipeline(
-        session=Session(),
-        SENDER_EMAIL= SENDER_EMAIL,
-        SENDER_PASSWORD= SENDER_PASSWORD,
-        SMTP_SERVER= SMTP_SERVER,
-        SMTP_PORT=SMTP_PORT)
+with Session() as session: 
+    run_full_outage_pipeline(
+        session=session, 
+        SENDER_EMAIL=SENDER_EMAIL,
+        SENDER_PASSWORD=SENDER_PASSWORD,
+        SMTP_SERVER=SMTP_SERVER,
+        SMTP_PORT=SMTP_PORT
+    )
+    
 scheduler.start()
 
 
