@@ -78,7 +78,7 @@ scheduler.add_job(
     id='full_pipeline_job',
     func=run_full_outage_pipeline, 
     kwargs={
-        "session":Session(),
+        "session":Session,
         'SENDER_EMAIL': SENDER_EMAIL,
         'SENDER_PASSWORD': SENDER_PASSWORD,
         'SMTP_SERVER': SMTP_SERVER,
@@ -431,7 +431,7 @@ def delete_account():
 
 
 run_full_outage_pipeline(
-        session=Session(),
+        session=Session,
         SENDER_EMAIL= SENDER_EMAIL,
         SENDER_PASSWORD= SENDER_PASSWORD,
         SMTP_SERVER= SMTP_SERVER,

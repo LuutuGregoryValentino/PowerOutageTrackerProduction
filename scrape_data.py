@@ -75,8 +75,10 @@ def send_outage_email(recipient_email, outage_details, SENDER_EMAIL, SENDER_PASS
 def scrape_outage_data():
     url="https://www.uedcl.co.ug/outage-alerts/"
     outageDict = {}
-
-    data = requests.get(url,timeout=10)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
+    data = requests.get(url,timeout=10,headers=headers)
     if data.status_code == 200:
         print("Request Successful!")
         soup = BeautifulSoup(data.text,"html.parser")
