@@ -4,7 +4,7 @@ from datetime import  datetime
 from models import Outage, User, Notification
 from geopy.geocoders import Nominatim
 import math,time
-# import os
+import os
 import smtplib
 from email.message import EmailMessage
 
@@ -98,20 +98,29 @@ def scrape_outage_data():
     url = "https://www.uedcl.co.ug/outage-alerts/"
     outageDict = {}
     
+    SCRAPEOPS_API_KEY = os.getenv('SCRAPEOPS_API_KEY')
+    proxy_url = f"http://scrapeops:{SCRAPEOPS_API_KEY}@residential-proxy.scrapeops.io:8181"
+    proxies = {
+        'http': proxy_url,
+        'https': proxy_url
+    }
 
     max_retries = 3
+    session = requests.Session()
+    
     for attempt in range(max_retries):
         try:
-            with requests.Session() as s:
-                response = s.get(url, timeout=15, headers=get_human_headers())
+            session.headers.update(get_human_headers())
+            
+            response = session.get(url, proxies=proxies, timeout=30)
             
             if response.status_code == 200:
-                print("Request successful, Parsing data...")
+                print("Success! Residential proxy bypassed the WAF.")
                 soup = BeautifulSoup(response.text, "html.parser")
                 
                 outage_Table_container = soup.find("table")
                 if not outage_Table_container:
-                    print("Couldnot find the required table in HTML.")
+                    print("Table not found. Site structure might have changed.")
                     return None 
                 
                 for row in outage_Table_container.find_all("tr"):
@@ -129,29 +138,20 @@ def scrape_outage_data():
                                 "Date": date_time_raw[0],
                                 "Time": date_time_raw[1]
                             }
-                
                 return outageDict
 
             elif response.status_code == 403:
-                print(f"Attempt {attempt + 1}: 403 Forbidden. Server is blocking request.")
+                print(f"Attempt {attempt + 1}: Still 403. Proxy might be flagged or headers insufficient.")
             else:
-                print(f"Attempt {attempt + 1}: Failed with status {response.status_code}")
+                print(f"Attempt {attempt + 1}: Status {response.status_code}")
 
-        except (requests.exceptions.Timeout, requests.exceptions.RequestException) as e:
-            print(f"Attempt {attempt + 1}: Network error: {e}")
         except Exception as e:
-            print(f"An unnexpected error occurred: {e}")
-            return None 
+            print(f"Attempt {attempt + 1} Error: {e}")
         
         if attempt < max_retries - 1:
-            wait_time = (attempt + 1) * 5 
-            print(f"Waiting {wait_time} seconds before retrying.....")
-            time.sleep(wait_time)
+            time.sleep(5)
 
-    print("all retry attempts failed.")
     return None
-
-import time
 
 def run_full_outage_pipeline(session, SENDER_EMAIL, SENDER_PASSWORD, SMTP_SERVER, SMTP_PORT):
     print("starting full ootage ppieline scrape save notify")
