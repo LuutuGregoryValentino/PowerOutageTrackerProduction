@@ -1,4 +1,4 @@
-import requests
+import requests,random
 from bs4 import BeautifulSoup
 from datetime import  datetime
 from models import Outage, User, Notification
@@ -71,12 +71,17 @@ def send_outage_email(recipient_email, outage_details, SENDER_EMAIL, SENDER_PASS
         print(f"FAILURE: Could not send email to {recipient_email}. Error: {e}")
         return False
     
-def scrape_outage_data():
-    url = "https://www.uedcl.co.ug/outage-alerts/"
-    outageDict = {}
+
+def get_human_headers():
+    user_agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"
+    ]
     
-    headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    return {
+    "User-Agent": random.choice(user_agents),
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
     "Accept-Encoding": "gzip, deflate, br",
@@ -89,11 +94,16 @@ def scrape_outage_data():
     "Cache-Control": "max-age=0",
     }
 
+def scrape_outage_data():
+    url = "https://www.uedcl.co.ug/outage-alerts/"
+    outageDict = {}
+    
+
     max_retries = 3
     for attempt in range(max_retries):
         try:
             with requests.Session() as s:
-                response = s.get(url, timeout=15, headers=headers)
+                response = s.get(url, timeout=15, headers=get_human_headers())
             
             if response.status_code == 200:
                 print("Request successful, Parsing data...")
