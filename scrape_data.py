@@ -7,6 +7,9 @@ import math,time
 import os
 import smtplib
 from email.message import EmailMessage
+from urllib.parse import urlencode
+
+
 
 R = 6371
 THRESHOLD_KM = 20
@@ -71,7 +74,6 @@ def send_outage_email(recipient_email, outage_details, SENDER_EMAIL, SENDER_PASS
         print(f"FAILURE: Could not send email to {recipient_email}. Error: {e}")
         return False
     
-
 def get_human_headers():
     user_agents = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
@@ -94,33 +96,37 @@ def get_human_headers():
     "Cache-Control": "max-age=0",
     }
 
+
+
 def scrape_outage_data():
-    url = "https://www.uedcl.co.ug/outage-alerts/"
+    target_url = "https://www.uedcl.co.ug/outage-alerts/"
+    api_endpoint = 'https://proxy.scrapeops.io/v1/'
     outageDict = {}
     
     SCRAPEOPS_API_KEY = os.getenv('SCRAPEOPS_API_KEY')
-    proxy_url = f"http://scrapeops:{SCRAPEOPS_API_KEY}@residential-proxy.scrapeops.io:8181"
-    proxies = {
-        'http': proxy_url,
-        'https': proxy_url
+    
+    payload = {
+        'api_key': SCRAPEOPS_API_KEY,
+        'url': target_url,
+        'bypass': 'cloudflare_level_1', 
+        'render_js': 'true',            
+        'residential': 'true'         
     }
 
     max_retries = 3
-    session = requests.Session()
-    
     for attempt in range(max_retries):
         try:
-            session.headers.update(get_human_headers())
+            print(f"Attempt {attempt + 1}: Sending request to ScrapeOps API...")
             
-            response = session.get(url, proxies=proxies, timeout=30)
+            response = requests.get(api_endpoint, params=urlencode(payload), timeout=120)
             
             if response.status_code == 200:
-                print("Success! Residential proxy bypassed the WAF.")
+                print("Success! Data retrieved via ScrapeOps API.")
                 soup = BeautifulSoup(response.text, "html.parser")
                 
                 outage_Table_container = soup.find("table")
                 if not outage_Table_container:
-                    print("Table not found. Site structure might have changed.")
+                    print("Table not found in the returned HTML.")
                     return None 
                 
                 for row in outage_Table_container.find_all("tr"):
@@ -141,17 +147,20 @@ def scrape_outage_data():
                 return outageDict
 
             elif response.status_code == 403:
-                print(f"Attempt {attempt + 1}: Still 403. Proxy might be flagged or headers insufficient.")
+                print(f"Attempt {attempt + 1}: 403 Forbidden (API Blocked). Check ScrapeOps credits.")
             else:
-                print(f"Attempt {attempt + 1}: Status {response.status_code}")
+                print(f"Attempt {attempt + 1}: Failed with status {response.status_code}")
 
         except Exception as e:
             print(f"Attempt {attempt + 1} Error: {e}")
         
         if attempt < max_retries - 1:
-            time.sleep(5)
+            print("Retrying in 10 seconds...")
+            time.sleep(10)
 
     return None
+
+
 
 def run_full_outage_pipeline(session, SENDER_EMAIL, SENDER_PASSWORD, SMTP_SERVER, SMTP_PORT):
     print("starting full ootage ppieline scrape save notify")
