@@ -1,11 +1,8 @@
-import requests,random
+import requests,random,math,time,os,smtplib
 from bs4 import BeautifulSoup
 from datetime import  datetime
 from models import Outage, User, Notification
 from geopy.geocoders import Nominatim
-import math,time
-import os
-import smtplib
 from email.message import EmailMessage
 from urllib.parse import urlencode
 
@@ -106,19 +103,22 @@ def scrape_outage_data():
     SCRAPEOPS_API_KEY = os.getenv('SCRAPEOPS_API_KEY')
     
     payload = {
-        'api_key': SCRAPEOPS_API_KEY,
-        'url': target_url,
-        'bypass': 'cloudflare_level_1', 
-        'render_js': 'true',            
-        'residential': 'true'         
-    }
+    'api_key': SCRAPEOPS_API_KEY,
+    'url': target_url,
+    'bypass': 'cloudflare_level_2', 
+    'render_js': 'true',
+    'residential': 'true',
+    'wait_for_selector': 'table',    # Only returns when the table is loaded
+    'browser': 'chrome'             # Explicitly simulate Chrome
+}
 
     max_retries = 3
     for attempt in range(max_retries):
         try:
             print(f"Attempt {attempt + 1}: Sending request to ScrapeOps API...")
             
-            response = requests.get(api_endpoint, params=urlencode(payload), timeout=120)
+            response = requests.get(api_endpoint, params=urlencode(payload), timeout=180)
+            print(response.text[:500])
             
             if response.status_code == 200:
                 print("Success! Data retrieved via ScrapeOps API.")
@@ -156,7 +156,7 @@ def scrape_outage_data():
         
         if attempt < max_retries - 1:
             print("Retrying in 10 seconds...")
-            time.sleep(10)
+            time.sleep(random.uniform(5,15))
 
     return None
 
