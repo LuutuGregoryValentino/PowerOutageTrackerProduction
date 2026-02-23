@@ -77,7 +77,6 @@ def scrape_outage_data():
     with requests.Session() as s:
         response = s.get(APIFYURL, timeout=3000)
         if response.status_code == 200:
-            with open("text.txt", "a+") as f:
                 a = json.loads(response.text)[1]["tables"][0]["data"]
                 for j in a:
                     date_time_raw = j["Date"].split(" ")
@@ -211,5 +210,5 @@ def run_full_outage_pipeline(session, SENDER_EMAIL, SENDER_PASSWORD, SMTP_SERVER
         print("===> Full Pipeline Complete <===")
 
 if __name__ == "__main__":
-    scrape_outage_data()
-    # print("Scraper module ready.")
+    # scrape_outage_data()
+    print("Scraper module re/ady.")
