@@ -10,8 +10,9 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 import math,os,datetime
+from datetime import timedelta
 
-THRESHOLD_KM = 20
+THRESHOLD_KM = 10
 
 def haversine_distance(lat1, lon1, lat2, lon2):
     """
@@ -75,8 +76,8 @@ scheduler.add_job(
         'SMTP_PORT': SMTP_PORT
     },
     trigger='interval',
-    # hours=24, 
-    seconds=60, # For testing purposes
+    hours=20, 
+    # seconds=60, # For testing purposes
     misfire_grace_time=3600*36
 )
 
@@ -447,7 +448,7 @@ try:
         id='initial_manual_run', 
         func=run_full_outage_pipeline, 
         trigger='date', # Run once
-        run_date=datetime.now() + timedelta(seconds=10), # Delay
+        run_date=datetime.now() + timedelta(seconds=60), # Delay
         kwargs=job_kwargs
     )
 finally:
