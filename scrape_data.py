@@ -77,7 +77,7 @@ def send_outage_email(recipient_email, outage_details, SENDER_EMAIL, SENDER_PASS
                     {outage_items_html}
 
                     <div style="text-align: center; margin-top: 30px;">
-                        <a href="https://your-app-url.render.com" style="background-color: #F5B301; color: #1F2A44; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Live Tracker</a>
+                        <a href="https://uedcl-power-outage-tracker.onrender.com/" style="background-color: #F5B301; color: #1F2A44; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Live Tracker</a>
                     </div>
                 </td>
             </tr>
