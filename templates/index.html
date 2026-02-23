@@ -4,64 +4,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Power Outage Status | Global & Local Check</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> 
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h2>⚡ Power Outage Tracker</h2>
-            <nav id="auth-links">
-                {% if session.get('user_name') %}
-                    <span style="margin-right: 15px;">Welcome back, {{ session.get('user_name').upper() }}</span>
-                    
-                    <div class="menu-container"> 
-                        <button id="userMenuBtn" class="menu-button">Settings ▼</button>
-                        <div id="userMenuDropdown" class="dropdown-content">
-                            <a href="{{ url_for('profile_management') }}">Manage Profile</a>
-                            <a href="{{ url_for('logout') }}" id="logoutLink" style="color: #dc3545;">Logout</a> 
-                        </div>
+    <header>
+        <h2><i class="fas fa-bolt" style="color: #F5B301;"></i> Power Alert</h2>
+        <nav class="auth-links">
+            {% if session.get('user_name') %}
+                <div class="menu-container"> 
+                    <button id="userMenuBtn" class="menu-button">
+                        <i class="fas fa-user-circle"></i> {{ session.get('user_name').split()[0] }} ▼
+                    </button>
+                    <div id="userMenuDropdown" class="dropdown-content">
+                        <a href="{{ url_for('profile_management') }}"><i class="fas fa-cog"></i> Settings</a>
+                        <a href="{{ url_for('logout') }}" style="color: var(--danger-red);"><i class="fas fa-sign-out-alt"></i> Logout</a> 
                     </div>
-                    
-                {% else %}
-                    <a href="{{ url_for('login') }}">Sign In / Subscribe</a>
-                {% endif %}
-            </nav>
-        </header>
+                </div>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn" style="background: var(--primary-blue); color: white; padding: 8px 15px;">Sign In</a>
+            {% endif %}
+        </nav>
+    </header>
 
+    <div class="container">
         <section class="personal-check">
-            <button id="checkMyAreaBtn">📍 Check My Area for Outages (Filter)</button>
-            <button id="resetBtn" style="display: none;">Show All Outages</button>
-            <p id="localStatusMessage" class="status-message">Click the button above to filter outages by your current location.</p>
+            <button id="checkMyAreaBtn">
+                <i class="fas fa-location-crosshairs"></i> Check My Area for Outages
+            </button>
+            <button id="resetBtn" style="display: none;">
+                <i class="fas fa-undo"></i> Show All Outages
+            </button>
+            <p id="localStatusMessage" class="status-message">
+                Filter outages based on your GPS location.
+            </p>
         </section>
 
         <section class="outage-data">
-            <h3>Global Scheduled Outages</h3>
-            <div style="margin-bottom: 20px;">
-    <label for="outageSearch">🔍 Search Outages:</label>
-    <input type="text" id="outageSearch" 
-           placeholder="Search by District or Sub Area..." 
-           style="width: 300px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-</div>
+            <div class="search-box">
+                <label for="outageSearch" style="font-weight: bold; display: block; margin-bottom: 8px;">
+                    <i class="fas fa-search"></i> Search Outages
+                </label>
+                <input type="text" id="outageSearch" placeholder="District, Town, or Street...">
+            </div>
 
+            <h3>Scheduled Outages</h3>
             <div class="table-container">
                 <table id="outagesTable">
                     <thead>
                         <tr>
-                            <th>District</th>
+                            <th>Area / Distance</th>
                             <th>Date</th>
                             <th>Time</th>
-                            <th>Sub Areas</th>
-
+                            <th>Details</th>
                         </tr>
                     </thead>
                     <tbody>
                         </tbody>
                 </table>
-                <p id="emptyMessage" style="text-align: center; margin-top: 20px; display: none;">No outages are currently scheduled.</p>
+                <div id="emptyMessage" style="text-align: center; padding: 40px; display: none;">
+                    <i class="fas fa-calendar-check" style="font-size: 3rem; color: #ddd; display: block; margin-bottom: 10px;"></i>
+                    <p>No outages are currently scheduled.</p>
+                </div>
             </div>
         </section>
-
     </div>
+
     <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>

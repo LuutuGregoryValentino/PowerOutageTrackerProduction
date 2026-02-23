@@ -1,194 +1,288 @@
-/* styles.css (Updated for premium tables and better layout organization) */
+/* --- Global Reset & Variables --- */
+:root {
+    --primary-blue: #0B5ED7;
+    --dark-blue: #1F2A44;
+    --power-amber: #F5B301;
+    --alert-orange: #FF9800;
+    --danger-red: #DC3545;
+    --success-green: #198754;
+    --bg-gray: #F0F2F5;
+    --card-white: #FFFFFF;
+    --text-main: #212529;
+    --text-muted: #6C757D;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
 
-/* --- Neutral UI Colors --- */
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #F8F9FA; /* Light Gray */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-gray);
+    color: var(--text-main);
     margin: 0;
-}
-.container {
-    background: #FFFFFF; /* White */
-    padding: 30px; /* Increased padding */
-    border-radius: 12px; /* Slightly larger border-radius */
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); /* Deeper shadow */
-    width: 85%; /* Slightly wider container */
-    max-width: 1200px; /* Add a max-width for large screens */
-    min-height: 60vh;
-}
-h2 {
-    text-align: center;
-    color: #212529; /* Almost Black (Primary text) */
-    margin-bottom: 30px;
+    padding: 0;
+    display: block; /* Removed flex-center for better mobile scrolling */
 }
 
-/* 🚀 Header & Navigation (Improved Organization) */
+/* --- Layout Container --- */
+.container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--card-white);
+    min-height: 100vh;
+    padding: 15px;
+    padding-top: 80px; /* Space for sticky header */
+}
+
+/* --- Sticky Header & Nav --- */
 header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: var(--card-white);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid #DEE2E6; /* Slightly thicker line */
-    padding-bottom: 15px;
-    margin-bottom: 30px;
+    padding: 0 20px;
+    border-bottom: 1px solid #ddd;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
-header a {
-    text-decoration: none;
-    color: #0B5ED7; /* Deep Utility Blue (Primary brand color) */
-    font-weight: bold;
-    padding: 5px 10px; /* Give links some space */
-    transition: color 0.2s;
+
+header h2 {
+    font-size: 1.1rem;
+    margin: 0;
+    color: var(--dark-blue);
 }
-header a:hover {
-    color: #1F2A44; /* Dark Slate Blue on hover */
-}
+
 .auth-links {
-    /* Group sign-in/subscribe links */
     display: flex;
-    gap: 15px;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
 }
 
-
-/* --- Buttons (Primary & Accent) --- */
-.personal-check {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-#checkMyAreaBtn, #resetBtn {
-    padding: 14px 25px; /* Larger buttons */
-    background-color: #F5B301; /* Amber / Power Yellow */
-    color: #212529;
+/* --- Buttons --- */
+button, .btn {
+    font-weight: 600;
     border: none;
-    border-radius: 8px; /* Slightly more rounded */
+    border-radius: 10px;
+    padding: 12px 20px;
     cursor: pointer;
-    font-size: 17px;
-    margin: 5px;
-    transition: background-color 0.2s, transform 0.1s;
-}
-#checkMyAreaBtn:hover, #resetBtn:hover {
-    background-color: #e6a500; /* Darker yellow on hover */
-    transform: translateY(-1px); /* Slight lift effect */
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
-
-/* 🏆 Premium Table Styling */
-table {
-    color: rgb(4, 31, 53);
-    width: 100%;
-    border-collapse: separate; /* Required for border-radius on table */
-    border-spacing: 0;
-    border-radius: 8px; /* Rounded corners for the entire table */
-    overflow: hidden; /* Ensures borders/corners are respected */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Very light table shadow */
-    margin-top: 20px;
-}
-th, td {
-    padding: 15px; /* Increased vertical padding */
-    border: none; /* Remove individual cell borders */
-    border-bottom: 1px solid #DEE2E6; /* Only soft separators between rows */
-    text-align: left;
-}
-th {
-    background-color: #445b91; /* Dark Slate Blue (Secondary brand color) */
-    color: white; /* White text on dark header */
-    font-weight: 600; /* Medium bold */
-    text-transform: uppercase;
-    font-size: 0.9em;
+#checkMyAreaBtn, #resetBtn, #saveProfileBtn, #saveLocationBtn {
+    background-color: var(--power-amber);
+    color: var(--text-main);
+    width: 100%; /* Mobile priority */
+    font-size: 1rem;
 }
 
-/* Remove bottom border from the last row */
-tr:last-child td {
-    border-bottom: none;
+#checkMyAreaBtn:active, #saveProfileBtn:active {
+    transform: scale(0.98);
 }
 
-/* Hover effect for data rows */
-tbody tr:hover {
-    background-color: #F0F2F5; /* Light hover background */
-    cursor: default;
-}
-
-.status-message {
-    padding: 10px;
-    margin-top: 10px;
-    border-radius: 4px;
-}
-
-th:nth-child(4),
-td:nth-child(4) {
-  width: 65%;
-  min-width: 65%;
-}
--webkit-
-.expanded-content {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
-
-/* --- Menu Button / Dropdown --- */
+/* --- User Menu Dropdown --- */
 .menu-container {
     position: relative;
-    display: inline-block;
-    margin-left: 15px; /* Separate from auth links */
 }
 
 .menu-button {
-    background-color: #0B5ED7; /* Deep Utility Blue */
-    color: white;
-    padding: 10px 18px; /* Slightly larger button */
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 15px;
-    transition: background-color 0.2s;
+    background: var(--bg-gray);
+    color: var(--dark-blue);
+    padding: 8px 12px;
+    font-size: 0.85rem;
 }
-.menu-button:hover {
-    background-color: #084cba;
-}
-
 
 .dropdown-content {
     display: none;
     position: absolute;
+    top: 100%;
     right: 0;
-    background-color: #FFFFFF;
-    min-width: 180px; /* Slightly wider dropdown */
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 100; /* Higher z-index */
-    border-radius: 4px;
+    background: var(--card-white);
+    min-width: 180px;
+    box-shadow: var(--shadow);
+    border-radius: 10px;
+    margin-top: 10px;
     overflow: hidden;
+    border: 1px solid #eee;
 }
 
 .dropdown-content a {
-    color: #212529;
-    padding: 12px 16px;
+    color: var(--text-main);
+    padding: 14px 16px;
     text-decoration: none;
     display: block;
-    font-size: 14px;
+    border-bottom: 1px solid #f8f8f8;
 }
 
-.dropdown-content a:hover {
-    background-color: #F8F9FA;
-    color: #0B5ED7;
+.dropdown-content a:last-child { border: none; }
+.show { display: block; }
+
+/* --- Search Bar --- */
+.search-box {
+    margin: 20px 0;
 }
 
-.show {
-    display: block;
+#outageSearch {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s;
 }
 
-/* --- Highlighting & Status Colors --- */
+#outageSearch:focus {
+    border-color: var(--primary-blue);
+}
+
+/* --- Mobile-Friendly Table --- */
+.table-container {
+    overflow-x: auto;
+    margin-top: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+th {
+    background: var(--bg-gray);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    padding: 12px;
+    text-align: left;
+}
+
+td {
+    padding: 15px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: top;
+}
+
+/* --- Outage Status Logic --- */
+.outage-imminent {
+    background-color: #FFF9F0 !important;
+    border-left: 4px solid var(--alert-orange);
+}
+
+.outage-past {
+    opacity: 0.6;
+    background-color: #fafafa;
+}
+
 .highlight {
-    background-color: #FFF3CD; /* Light Amber (Soft highlight) */
-    color: #212529;
+    background-color: var(--power-amber);
     font-weight: bold;
-    padding: 2px 4px; /* Added horizontal padding */
-    border-radius: 4px;
+    border-radius: 3px;
+    padding: 0 2px;
 }
 
-/* Status colors (Red, Orange, Green) */
-.status-outage { background-color: #DC3545; color: white; }
-.status-warning { background-color: #FD7E14; color: #212529; } /* Dark text for contrast on Orange */
-.status-normal { background-color: #198754; color: white; }
+/* --- Profile & Form Elements --- */
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+input[type="text"], input[type="email"], input[type="tel"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.info-box {
+    background: var(--bg-gray);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    font-size: 0.9rem;
+    border-left: 4px solid var(--primary-blue);
+}
+
+.current-coords {
+    font-family: monospace;
+    background: #212529;
+    color: #00FF41; /* Matrix green look */
+    padding: 12px;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+/* --- Status Messages --- */
+.status-message {
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin: 10px 0;
+    text-align: center;
+}
+
+/* --- Danger Zone --- */
+.danger-section {
+    margin-top: 40px;
+    padding: 20px;
+    border: 1px dashed var(--danger-red);
+    border-radius: 12px;
+}
+
+#deleteAccountBtn {
+    background-color: var(--danger-red);
+    color: white;
+    width: 100%;
+}
+
+/* --- Details / Summary Styling --- */
+details {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+summary {
+    font-weight: 600;
+    color: var(--primary-blue);
+    cursor: pointer;
+}
+
+details p {
+    font-size: 0.85rem;
+    margin-top: 8px;
+    color: #555;
+}
+
+/* --- Tablet/Desktop Adjustments --- */
+@media (min-width: 600px) {
+    .container {
+        margin: 20px auto;
+        border-radius: 20px;
+        min-height: auto;
+        box-shadow: var(--shadow);
+    }
+    #checkMyAreaBtn, #resetBtn { width: auto; }
+}

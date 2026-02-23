@@ -4,60 +4,140 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Setup Location | Power Alert</title>
-    <link rel="stylesheet" href="{{ url_for('static',filename='styles.css') }}"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> 
     <style>
-        /* Specific style for this small page */
-        .container { width: 450px; text-align: center; }
-        .location-inputs { display: flex; gap: 10px; margin-top: 10px; }
-        .location-inputs input { width: 50%; }
-        #statusMessage { min-height: 40px; } /* Ensures space is always reserved */
+        /* Progress Indicator Styles */
+        .step-wizard {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+        .step-item {
+            text-align: center;
+            flex: 1;
+            position: relative;
+        }
+        .step-item:not(:last-child):after {
+            content: "";
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: #ddd;
+            z-index: -1;
+        }
+        .step-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ddd;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .step-item.active .step-icon { background: var(--primary-blue); }
+        .step-item.complete .step-icon { background: var(--success-green); }
+        
+        /* Specific page layout */
+        .onboarding-card {
+            text-align: center;
+            padding: 20px;
+        }
+        .location-readout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .coord-input-group {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .coord-input-group small { color: var(--text-muted); display: block; font-size: 0.7rem; }
+        .coord-input-group span { font-family: monospace; font-weight: bold; color: var(--dark-blue); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>📍 Welcome! Set Your Alert Location</h2>
-        <p>This is the final step! We need your location to know which outage alerts to send to your email ({{ session.get('email') }}).</p>
-        
-        <form id="locationSetupForm">
-            <label>1. Click the button to fetch your current coordinates.</label>
-            <button type="button" id="getLocationManually" style="margin-bottom: 20px;">Get Current Location</button>
-
-            <div class="location-inputs">
-                <input type="text" id="latitude" placeholder="Latitude" readonly required>
-                <input type="text" id="longitude" placeholder="Longitude" readonly required>
+    <div class="container" style="max-width: 500px; margin-top: 40px;">
+        <div class="onboarding-card">
+            <div class="step-wizard">
+                <div class="step-item complete"><div class="step-icon"><i class="fas fa-check"></i></div><div style="font-size: 0.7rem;">Account</div></div>
+                <div class="step-item active"><div class="step-icon">2</div><div style="font-size: 0.7rem;">Location</div></div>
+                <div class="step-item"><div class="step-icon">3</div><div style="font-size: 0.7rem;">Alerts</div></div>
             </div>
 
-                <label for="phone">Phone Number (Optional)</label><br>
-            <input type="text" id="phone" placeholder="Whatsapp ">
+            <h2><i class="fas fa-map-marker-alt" style="color: var(--danger-red);"></i> Finish Setup</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                We need your coordinates to send relevant alerts to <strong>{{ session.get('email') }}</strong>.
+            </p>
 
-            <div style="text-align: left; margin-top: 15px;">
-                <input type="checkbox" id="isSubscribed" checked>
-                <label for="isSubscribed" style="display: inline-block; font-weight: normal;">Yes, I want to receive automated email alerts.</label>
+            <form id="locationSetupForm">
+                <div class="info-box" style="text-align: left; background: #fffcf0; border-left-color: var(--power-amber);">
+                    <strong>Step 1: Get GPS Position</strong>
+                    <p style="margin: 5px 0 10px 0; font-size: 0.8rem;">Click below to identify your alert zone.</p>
+                    <button type="button" id="getLocationManually" class="btn" style="width: 100%; background: var(--dark-blue); color: white;">
+                        <i class="fas fa-crosshairs"></i> Fetch My Location
+                    </button>
+                </div>
+
+                <div class="location-readout">
+                    <div class="coord-input-group">
+                        <small>LATITUDE</small>
+                        <span id="latDisplay">0.000000</span>
+                    </div>
+                    <div class="coord-input-group">
+                        <small>LONGITUDE</small>
+                        <span id="lonDisplay">0.000000</span>
+                    </div>
+                </div>
+
+                <div style="text-align: left; margin-top: 20px;">
+                    <div class="form-group">
+                        <label for="phone"><i class="fab fa-whatsapp"></i> WhatsApp Number (Optional)</label>
+                        <input type="tel" id="phone" placeholder="e.g. +256 7xx xxxxxx">
+                    </div>
+
+                    <div class="form-group" style="display: flex; align-items: center; gap: 10px; background: #f0f7ff; padding: 12px; border-radius: 8px;">
+                        <input type="checkbox" id="isSubscribed" checked style="width: 18px; height: 18px;">
+                        <label for="isSubscribed" style="margin: 0; font-weight: normal; font-size: 0.85rem;">
+                            Enable automated email alerts
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" id="saveLocationBtn" class="btn" style="width: 100%; margin-top: 20px;" disabled>
+                    Complete Setup <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div id="statusMessage" class="status-message" style="margin-top: 20px; font-weight: 500;">
+                Awaiting location sync...
             </div>
-                
-                <button type="submit" id="saveLocationBtn" disabled>2. Save Location and Go to Alerts</button>
-        </form>
-        
-        <div id="statusMessage" class="status-message">Awaiting location fetch...</div>
+        </div>
     </div>
-    
+
     <script>
-        const getLocationManuallyBtn = document.getElementById('getLocationManually');
-        const saveLocationBtn = document.getElementById('saveLocationBtn');
-        const latitudeInput = document.getElementById('latitude');
-        const longitudeInput = document.getElementById('longitude');
+        const getLocationBtn = document.getElementById('getLocationManually');
+        const saveBtn = document.getElementById('saveLocationBtn');
+        const latDisplay = document.getElementById('latDisplay');
+        const lonDisplay = document.getElementById('lonDisplay');
         const statusMessage = document.getElementById('statusMessage');
         const form = document.getElementById('locationSetupForm');
-        const phoneInput = document.getElementById('phone');
-        const isSubscribedCheckbox = document.getElementById('isSubscribed');
-
-
+        
         let userLat = null;
         let userLon = null;
 
-        //location fetching 
-        function getLocation() {
-            statusMessage.textContent = 'Attempting to fetch your location...';
+        getLocationBtn.addEventListener('click', () => {
+            statusMessage.textContent = '🛰️ Syncing with satellites...';
+            statusMessage.style.color = 'var(--primary-blue)';
             
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -65,83 +145,52 @@
                         userLat = position.coords.latitude;
                         userLon = position.coords.longitude;
 
-                        latitudeInput.value = userLat.toFixed(6);
-                        longitudeInput.value = userLon.toFixed(6);
+                        latDisplay.textContent = userLat.toFixed(6);
+                        lonDisplay.textContent = userLon.toFixed(6);
 
-                        statusMessage.textContent = 'Location successfully fetched. Click "Save Location".';
-                        statusMessage.style.backgroundColor = '#d4edda';
-                        statusMessage.style.color = '#155724';
-                        saveLocationBtn.disabled = false;
+                        statusMessage.textContent = '✅ Location Verified!';
+                        statusMessage.style.color = 'var(--success-green)';
+                        saveBtn.disabled = false;
+                        saveBtn.style.background = 'var(--success-green)';
+                        saveBtn.style.color = 'white';
                     },
                     (error) => {
-                        const msg = (error.code === error.PERMISSION_DENIED) 
-                            ? 'Error: Location access denied. Please allow location access.'
-                            : `Error getting location: ${error.message}`;
-
-                        statusMessage.textContent = msg;
-                        statusMessage.style.backgroundColor = '#f8d7da';
-                        statusMessage.style.color = '#721c24';
-                        saveLocationBtn.disabled = true;
+                        statusMessage.textContent = '❌ Access Denied. Please enable GPS.';
+                        statusMessage.style.color = 'var(--danger-red)';
                     }
                 );
-            } else {
-                statusMessage.textContent = 'Geolocation is not supported by this browser.';
-                saveLocationBtn.disabled = true;
             }
-        }
-        
-        //saving location in backend
+        });
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            if (userLat === null || userLon === null) {
-                statusMessage.textContent = 'Please fetch your location first.';
-                return;
-            }
-
-            statusMessage.textContent = 'Saving location...';
+            saveBtn.textContent = 'Saving Preferences...';
             
             const data = {
                 latitude: userLat,
                 longitude: userLon,
-                phone_number: phoneInput.value,
-                is_subscribed: isSubscribedCheckbox.checked
+                phone_number: document.getElementById('phone').value,
+                is_subscribed: document.getElementById('isSubscribed').checked
             };
-            console.log(data);
-            
 
             try {
-                // POST request to the /setup_location route in app.py
                 const response = await fetch('/setup_location', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
 
-                const result = await response.json();
-
-                if (response.ok && result.status === 'SUCCESS') {
-                    statusMessage.textContent = 'Location saved! Redirecting to the main status page...';
-                    statusMessage.style.backgroundColor = '#d4edda';
-                    
-                    setTimeout(() => {
-                        window.location.href = '/'; 
-                    }, 1500); 
-
+                if (response.ok) {
+                    statusMessage.textContent = '🚀 All set! Redirecting...';
+                    setTimeout(() => window.location.href = '/', 1500);
                 } else {
-                    statusMessage.textContent = `Error saving: ${result.message || 'Server error.'}`;
-                    statusMessage.style.backgroundColor = '#f8d7da';
+                    statusMessage.textContent = '⚠️ Error saving data.';
+                    saveBtn.textContent = 'Retry Save';
                 }
-
-            } catch (error) {
-                statusMessage.textContent = 'Could not connect to the server.';
-                statusMessage.style.backgroundColor = '#f8d7da';
+            } catch (err) {
+                statusMessage.textContent = '📡 Connection error.';
             }
         });
-
-        getLocationManuallyBtn.addEventListener('click', getLocation);
     </script>
 </body>
 </html>
