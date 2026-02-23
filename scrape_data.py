@@ -35,42 +35,81 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     return distance
 
 def send_outage_email(recipient_email, outage_details, SENDER_EMAIL, SENDER_PASSWORD, SMTP_SERVER, SMTP_PORT):
-    outage_list_html = "<ul>"
+    # Create the list items with consistent styling
+    outage_items_html = ""
     for outage in outage_details:
-        # Note: Using 'area' for consistency, ensure this key is correct
-        outage_list_html += f"<li>District: {outage['area']} (Approx. {outage['distance_km']}km away starting <strong>{outage['date']}</strong> at {outage['time']} )</li>"
-    outage_list_html +='</ul>'
+        outage_items_html += f"""
+        <div style="padding: 15px; border-bottom: 1px solid #eeeeee;">
+            <p style="margin: 0; color: #1F2A44; font-weight: bold;">📍 {outage['area']}</p>
+            <p style="margin: 5px 0; font-size: 14px; color: #666666;">
+                <strong>Date:</strong> {outage['date']} | <strong>Time:</strong> {outage['time']}
+            </p>
+            <p style="margin: 0; font-size: 12px; color: #DC3545;">
+                Approx. {outage['distance_km']} km from your saved location
+            </p>
+        </div>
+        """
 
-    html_content = f"""\
+    html_content = f"""
+    <!DOCTYPE html>
     <html>
-        <body>
-            <p>Dear Customer,</p>
-            <p>This is an automated power outage alert. Your saved location is within <strong>{THRESHOLD_KM} km</strong> of a scheduled power interruption.</p>
-            <p><strong>Affected Areas Near You:</strong></p>
-            {outage_list_html}
-            <p>Please prepare for the interruption. This alert is based on data provided by Uganda Electricity Distribution Company Limited (UEDCL).</p>
-            <p>Thank you.</p>
-        </body>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body style="font-family: 'Segoe UI', Helvetica, Arial, sans-serif; background-color: #F0F2F5; margin: 0; padding: 20px;">
+        <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <tr>
+                <td style="background-color: #1F2A44; padding: 20px; text-align: center;">
+                    <h1 style="color: #F5B301; margin: 0; font-size: 24px;">⚡ Power Alert</h1>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 30px;">
+                    <p style="font-size: 16px; color: #333333;">Dear Customer,</p>
+                    <p style="font-size: 14px; color: #555555; line-height: 1.6;">
+                        Our system has detected a scheduled power outage within <strong>{THRESHOLD_KM} km</strong> of your saved coordinates.
+                    </p>
+                    
+                    <div style="background-color: #FFF9F0; border-left: 4px solid #FF9800; padding: 10px 20px; margin: 20px 0;">
+                        <h3 style="color: #FF9800; margin: 0; font-size: 16px;">Scheduled Interruptions:</h3>
+                    </div>
+
+                    {outage_items_html}
+
+                    <div style="text-align: center; margin-top: 30px;">
+                        <a href="https://your-app-url.render.com" style="background-color: #F5B301; color: #1F2A44; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Live Tracker</a>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td style="background-color: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #999999;">
+                    <p>This is an automated alert based on UEDCL public data.</p>
+                    <p>To manage your alerts or change your location, log in to your profile.</p>
+                </td>
+            </tr>
+        </table>
+    </body>
     </html>
     """
+    
     msg = EmailMessage()
-    msg['Subject'] = '⚡ URGENT: Scheduled Power Outage Alert Near Your Location'
-    msg['From'] = SENDER_EMAIL
+    msg['Subject'] = '⚡ URGENT: Power Outage Alert Near You'
+    msg['From'] = f"Power Alert <{SENDER_EMAIL}>"
     msg['To'] = recipient_email
-    msg.set_content('Your client does not support HTML emails. Please upgrade to view the alert.')
+    msg.set_content('A power outage is scheduled near your area. Please enable HTML to view details.')
     msg.add_alternative(html_content, subtype='html')
     
     try:
-        with smtplib.SMTP(SMTP_SERVER,SMTP_PORT) as server:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
-            server.login(SENDER_EMAIL,SENDER_PASSWORD)
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
             server.send_message(msg)
-        print(f"SUCCESS: Email sent to {recipient_email}")
+        print(f"SUCCESS: Alert sent to {recipient_email}")
         return True
     except Exception as e:
-        print(f"FAILURE: Could not send email to {recipient_email}. Error: {e}")
+        print(f"FAILURE: Email error for {recipient_email}: {e}")
         return False
-  
+    
 def scrape_outage_data():
     outageDict= {}  #format = {district:{details dict}}
     with requests.Session() as s:
