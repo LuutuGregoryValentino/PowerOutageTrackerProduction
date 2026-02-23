@@ -422,18 +422,28 @@ def delete_account():
         return jsonify({"status": "ERROR", "message": "Internal error."}), 500
     finally:
         db_session.close()
-
+    
 scheduler.start()
 
-with SessionLocal() as initial_session: 
-    run_full_outage_pipeline(
-        session=initial_session, 
-        SENDER_EMAIL=SENDER_EMAIL,
-        SENDER_PASSWORD=SENDER_PASSWORD,
-        SMTP_SERVER=SMTP_SERVER,
-        SMTP_PORT=SMTP_PORT
-    )
-    
-
+db_session = SessionLocal()
+try:
+    if db_session.query(Outage).count() == 0:
+        print("Database empty, triggering initial scrape in background...")
+        
+        job_kwargs = {
+            "session": SessionLocal, 
+            "SENDER_EMAIL": SENDER_EMAIL,
+            "SENDER_PASSWORD": SENDER_PASSWORD,
+            "SMTP_SERVER": SMTP_SERVER,
+            "SMTP_PORT": SMTP_PORT
+        }
+        
+        scheduler.add_job(
+            id='initial_manual_run', 
+            func=run_full_outage_pipeline, 
+            kwargs=job_kwargs
+        ) 
+finally:
+    db_session.close()
 if __name__ == "__main__":
     app.run(debug=True,host="0.0.0.0")
