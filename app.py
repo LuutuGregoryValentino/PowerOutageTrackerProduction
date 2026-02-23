@@ -75,8 +75,8 @@ scheduler.add_job(
         'SMTP_PORT': SMTP_PORT
     },
     trigger='interval',
-    hours=24, 
-    # seconds=60, # For testing purposes
+    # hours=24, 
+    seconds=60, # For testing purposes
     misfire_grace_time=3600*36
 )
 
@@ -428,6 +428,7 @@ def delete_account():
         db_session.close()
     
 scheduler.start()
+print("\n\n\n\nscheduler started\n\n\n\n")
 
 db_session = SessionLocal()
 try:
