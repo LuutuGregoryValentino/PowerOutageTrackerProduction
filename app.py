@@ -105,26 +105,30 @@ def index():
 def get_outages():
     db_session = SessionLocal()
     try:
-        outages = db_session.query(Outage).all() #returns list of Outage objects
+        outages = db_session.query(Outage).all()
         
+        if not outages:
+            return jsonify([]) 
+
         outages_list = []
         for outage in outages:
-            sub_areas_list = outage.sub_areas.split(",") if outage.sub_areas else []
+            sub_areas_list = []
+            if outage.sub_areas:
+                sub_areas_list = [s.strip() for s in outage.sub_areas.split(",")]
 
             outages_list.append({
                 "id": outage.id,
                 "area": outage.area,
-                "sub_areas" : sub_areas_list,
-                # "status": outage.
-                "date" : outage.outage_date.isoformat() if outage.outage_date else None,
-                "time" : outage.outage_time.isoformat() if outage.outage_time else None,
+                "sub_areas": sub_areas_list,
+                "date": outage.outage_date.isoformat() if outage.outage_date else None,
+                "time": outage.outage_time.isoformat() if outage.outage_time else "TBD",
             })
 
         return jsonify(outages_list)
 
     except Exception as e:
-        print(f"Database Error: {e}")
-        return jsonify({'error':'Couldnt retrieve outage data.'}), 500
+        print(f"API Error: {e}")
+        return jsonify({'error': str(e)}), 500
     finally:
         db_session.close()
 
