@@ -1,5 +1,4 @@
 import requests
-from bs4 import BeautifulSoup
 from datetime import  datetime
 from models import Outage, User, Notification
 from geopy.geocoders import Nominatim

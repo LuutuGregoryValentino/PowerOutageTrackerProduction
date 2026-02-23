@@ -1,6 +1,7 @@
 from flask import Flask ,jsonify, request,redirect,url_for,session, render_template
 from flask_dance.contrib.google import make_google_blueprint ,google
 from flask_cors import CORS
+from werkzeug.middleware.proxy_fix import ProxyFix
 from scrape_data import run_full_outage_pipeline
 from models import Outage, User,Base
 from flask_apscheduler import APScheduler
@@ -34,10 +35,9 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     distance = 6371 * c
     return distance
 
-
-
 load_dotenv()
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 CORS(app)
 
 SMTP_SERVER = os.getenv('SMTP_SERVER')
@@ -45,7 +45,6 @@ SMTP_PORT = int(os.getenv('SMTP_PORT'))
 SENDER_EMAIL = os.getenv('SENDER_EMAIL')
 SENDER_PASSWORD = os.getenv('SENDER_PASSWORD')
 DB_URL = os.getenv("DATABASE_URL")
-
 
 if DB_URL and DB_URL.startswith("postgres://"):
     DB_URL = DB_URL.replace("postgres://", "postgresql://", 1)
@@ -57,10 +56,6 @@ engine = create_engine(final_db_url)
 Base.metadata.create_all(engine)
 
 SessionLocal = sessionmaker(bind=engine)
-
-
-
-
 
 app.config['SCHEDULER_JOBDEFAULTS']={
     "coalesce":True,
@@ -84,7 +79,6 @@ scheduler.add_job(
     # seconds=60, # For testing purposes
     misfire_grace_time=3600*36
 )
-
 
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
@@ -251,54 +245,60 @@ def google_authorized():
     
     try:
         resp = google.get("/oauth2/v2/userinfo")
-        if resp.ok:
-            user_info = resp.json()
-            email = user_info["email"]
-            full_name = user_info.get("name") 
-        else:
-            return redirect(url_for("register"))
+        if not resp.ok:
+            print(f"Google API Error: {resp.text}")
+            return "Failed to fetch user info from Google.", 400
+            
+        user_info = resp.json()
+        email = user_info["email"]
+        full_name = user_info.get("name", email.split('@')[0]) # Fallback to email prefix
+        
     except Exception as e:
-        print(f"Failed to fethc user inof form google: {e}")
-        return jsonify({"status":"ERROR","message":"Failed to retrieve user data form google."}), 500
+        print(f"Failed to fetch user info from google: {e}")
+        return jsonify({"status":"ERROR","message":"Connection error with Google."}), 500
     
-    db_session= SessionLocal()
+    db_session = SessionLocal()
 
     try:
         user = db_session.query(User).filter_by(email=email).first()
+        
         if user is None:
-            new_user = User(
+            # First time logging in? Create the record
+            user = User(
                 email=email,
-                is_subscribed = False,
-                name= full_name
+                is_subscribed=False,
+                name=full_name
             )
-            db_session.add(new_user)
+            db_session.add(user)
             db_session.commit()
-
-            user = new_user
-            print(f"New user created: {email}, pending setup: {full_name}")
-
+            db_session.refresh(user) # Get the ID
+            print(f"New Google user created: {email}")
         else:
-            session['user_name'] = user.name if user.name else user.email
-            print(f"Existing user logged in: {user.email}")
+            # Existing user;  maybe update their name if its missing
+            if not user.name:
+                user.name = full_name
+                db_session.commit()
 
+        # Set session data
+        session.permanent = True # Keep logged in
         session["user_id"] = user.id
         session['email'] = user.email
-        session['user_name'] = user.name if user.name else user.email
+        session['user_name'] = user.name
 
+        # Location Check
         if user.latitude is None or user.longitude is None:
+            print(f"Redirecting {email} to location setup...")
             return redirect(url_for("setup_location"))
-        else:
-            return redirect(url_for("index"))    
         
+        return redirect(url_for("index"))    
 
     except Exception as e:
         db_session.rollback()
         print(f"Database error during Google login: {e}")
-        return jsonify({"status": "ERROR", "message": "Internal database error during login."}), 500
-    
+        return "Database error during login.", 500
     finally:
         db_session.close()
-    
+
 @app.route('/setup_location', methods=['GET', 'POST'])
 def setup_location():
     if 'user_id' not in session:
@@ -398,7 +398,6 @@ def profile_management():
         db_session.close()
 
 @app.route('/delete_account', methods=['POST'])
-
 def delete_account():
     if 'user_id' not in session:
         return jsonify({"status": "ERROR", "message": "Not logged in"}), 401
@@ -424,6 +423,7 @@ def delete_account():
     finally:
         db_session.close()
 
+scheduler.start()
 
 with SessionLocal() as initial_session: 
     run_full_outage_pipeline(
@@ -434,8 +434,6 @@ with SessionLocal() as initial_session:
         SMTP_PORT=SMTP_PORT
     )
     
-scheduler.start()
-
 
 if __name__ == "__main__":
     app.run(debug=True,host="0.0.0.0")
