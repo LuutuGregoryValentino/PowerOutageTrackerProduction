@@ -1,16 +1,17 @@
-import requests,random,math,time,os,smtplib
+import requests
 from bs4 import BeautifulSoup
 from datetime import  datetime
 from models import Outage, User, Notification
 from geopy.geocoders import Nominatim
+import math,time
+import os,json
+import smtplib
 from email.message import EmailMessage
-from urllib.parse import urlencode
-
-
 
 R = 6371
 THRESHOLD_KM = 20
 geolocator = Nominatim(user_agent="gregory_power_tracker_ug_contact_me_at_snowchildwolf@gmail.com")
+APIFYURL = os.getenv("APIFYURL")
 
 def haversine_distance(lat1, lon1, lat2, lon2):
     """
@@ -70,97 +71,27 @@ def send_outage_email(recipient_email, outage_details, SENDER_EMAIL, SENDER_PASS
     except Exception as e:
         print(f"FAILURE: Could not send email to {recipient_email}. Error: {e}")
         return False
-    
-def get_human_headers():
-    user_agents = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"
-    ]
-    
-    return {
-    "User-Agent": random.choice(user_agents),
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Connection": "keep-alive",
-    "Upgrade-Insecure-Requests": "1",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-User": "?1",
-    "Cache-Control": "max-age=0",
-    }
-
-
-
+  
 def scrape_outage_data():
-    target_url = "https://www.uedcl.co.ug/outage-alerts/"
-    api_endpoint = 'https://proxy.scrapeops.io/v1/'
-    outageDict = {}
-    
-    SCRAPEOPS_API_KEY = os.getenv('SCRAPEOPS_API_KEY')
-    
-    payload = {
-    'api_key': SCRAPEOPS_API_KEY,
-    'url': target_url,
-    'bypass': 'cloudflare_level_2', 
-    'render_js': 'true',
-    'residential': 'true',
-    'wait_for_selector': 'table',    # Only returns when the table is loaded
-    'browser': 'chrome'             # Explicitly simulate Chrome
-}
-
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            print(f"Attempt {attempt + 1}: Sending request to ScrapeOps API...")
-            
-            response = requests.get(api_endpoint, params=urlencode(payload), timeout=180)
-            print(response.text[:500])
-            
-            if response.status_code == 200:
-                print("Success! Data retrieved via ScrapeOps API.")
-                soup = BeautifulSoup(response.text, "html.parser")
-                
-                outage_Table_container = soup.find("table")
-                if not outage_Table_container:
-                    print("Table not found in the returned HTML.")
-                    return None 
-                
-                for row in outage_Table_container.find_all("tr"):
-                    cells = row.find_all("td")
-                    if len(cells) >= 4:
-                        date_time_raw = cells[0].get_text(strip=True).split(" ")
-                        district = cells[1].get_text(strip=True)
-                        status = cells[2].get_text(strip=True)
-                        affected_areas = cells[3].get_text(strip=True)
-                        
-                        if len(date_time_raw) >= 2:
-                            outageDict[district] = {
-                                "Status": status,
-                                "Areas": affected_areas,
-                                "Date": date_time_raw[0],
-                                "Time": date_time_raw[1]
-                            }
+    outageDict= {}  #format = {district:{details dict}}
+    with requests.Session() as s:
+        response = s.get(APIFYURL, timeout=3000)
+        if response.status_code == 200:
+            with open("text.txt", "a+") as f:
+                a = json.loads(response.text)[1]["tables"][0]["data"]
+                for j in a:
+                    date_time_raw = j["Date"].split(" ")
+                    outageDict[j["District"]] = {
+                    "Status": j["Status"],
+                    "Areas": j['Affected Areas'],
+                    "Date": date_time_raw[0],
+                    "Time": date_time_raw[1]
+                    }
                 return outageDict
-
-            elif response.status_code == 403:
-                print(f"Attempt {attempt + 1}: 403 Forbidden (API Blocked). Check ScrapeOps credits.")
-            else:
-                print(f"Attempt {attempt + 1}: Failed with status {response.status_code}")
-
-        except Exception as e:
-            print(f"Attempt {attempt + 1} Error: {e}")
+        else:
+            return dict()
         
-        if attempt < max_retries - 1:
-            print("Retrying in 10 seconds...")
-            time.sleep(random.uniform(5,15))
-
-    return None
-
-
+import time
 
 def run_full_outage_pipeline(session, SENDER_EMAIL, SENDER_PASSWORD, SMTP_SERVER, SMTP_PORT):
     print("starting full ootage ppieline scrape save notify")
@@ -280,5 +211,5 @@ def run_full_outage_pipeline(session, SENDER_EMAIL, SENDER_PASSWORD, SMTP_SERVER
         print("===> Full Pipeline Complete <===")
 
 if __name__ == "__main__":
-   
-    print("Scraper module ready.")
+    scrape_outage_data()
+    # print("Scraper module ready.")

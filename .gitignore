@@ -6,3 +6,4 @@ extra/
 
 .env
 outages.db
+test.py
