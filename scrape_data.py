@@ -77,17 +77,16 @@ def scrape_outage_data():
     with requests.Session() as s:
         response = s.get(APIFYURL, timeout=3000)
         if response.status_code == 200:
-            with open("text.txt", "a+") as f:
-                a = json.loads(response.text)[1]["tables"][0]["data"]
-                for j in a:
-                    date_time_raw = j["Date"].split(" ")
-                    outageDict[j["District"]] = {
-                    "Status": j["Status"],
-                    "Areas": j['Affected Areas'],
-                    "Date": date_time_raw[0],
-                    "Time": date_time_raw[1]
-                    }
-                return outageDict
+            a = json.loads(response.text)[1]["tables"][0]["data"]
+            for j in a:
+                date_time_raw = j["Date"].split(" ")
+                outageDict[j["District"]] = {
+                "Status": j["Status"],
+                "Areas": j['Affected Areas'],
+                "Date": date_time_raw[0],
+                "Time": date_time_raw[1]
+                }
+            return outageDict
         else:
             return dict()
         
