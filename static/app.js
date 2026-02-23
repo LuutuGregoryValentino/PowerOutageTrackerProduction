@@ -103,7 +103,7 @@ function haversine_distance(lat1, lon1, lat2, lon2) {
 
 async function check_outages(lat,lon){
     try{
-        let response = await fetch ( `http://127.0.0.1:5000/api/check_outage?lat=${lat}&lon=${lon}` );
+        let response = await fetch ( `/api/check_outage?lat=${lat}&lon=${lon}` );
         let data = await response.json();
         
         fillTable(data.outages) 
@@ -150,7 +150,7 @@ async function getOutagesData(){
     
     let data;
     try{
-        const response = await fetch("http://127.0.0.1:5000/api/outages");
+        const response = await fetch("/api/outages");
         statusBar.textContent = "Fetching outages data";
 
         if (!response.ok){
