@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-import math,os
+import math,os,datetime
 
 THRESHOLD_KM = 20
 
@@ -83,7 +83,7 @@ scheduler.add_job(
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
 
-# os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '0'
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' #
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 google_blueprint = make_google_blueprint(
@@ -443,10 +443,12 @@ try:
         }
         
         scheduler.add_job(
-            id='initial_manual_run', 
-            func=run_full_outage_pipeline, 
-            kwargs=job_kwargs
-        ) 
+        id='initial_manual_run', 
+        func=run_full_outage_pipeline, 
+        trigger='date', # Run once
+        run_date=datetime.now() + timedelta(seconds=10), # Delay
+        kwargs=job_kwargs
+    )
 finally:
     db_session.close()
 if __name__ == "__main__":
