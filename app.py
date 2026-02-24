@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError, InterfaceError
 import math,os,datetime
 from datetime import timedelta
 
@@ -41,6 +42,18 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 CORS(app)
 
+#database error handling
+@app.errorhandler(500)
+@app.errorhandler(OperationalError)
+@app.errorhandler(InterfaceError)
+def handle_db_error(e):
+    print(f"Database/Server Error caught: {e}")
+    return render_template('maintenance.html'), 503
+
+@app.app_context_processor
+def inject_now():
+    return {'now': datetime.datetime.utcnow()}
+
 SMTP_SERVER = os.getenv('SMTP_SERVER')
 SMTP_PORT = int(os.getenv('SMTP_PORT')) 
 SENDER_EMAIL = os.getenv('SENDER_EMAIL')
@@ -52,7 +65,12 @@ if DB_URL and DB_URL.startswith("postgres://"):
 
 final_db_url = DB_URL or 'sqlite:///outages.db'
 
-engine = create_engine(final_db_url)
+engine = create_engine(
+    final_db_url, 
+    pool_pre_ping=True, 
+    pool_recycle=300,
+    connect_args={"sslmode": "require"} 
+)
 
 Base.metadata.create_all(engine)
 

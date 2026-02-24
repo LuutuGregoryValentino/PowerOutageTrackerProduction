@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Update | Power Alert</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .maintenance-container {
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+        .maintenance-icon {
+            font-size: 4rem;
+            color: var(--power-amber);
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="maintenance-container">
+            <div class="maintenance-icon">
+                <i class="fas fa-bolt-lightning"></i>
+            </div>
+            <h1>System Refresh in Progress</h1>
+            <p style="color: var(--text-muted); max-width: 400px; margin: 10px auto;">
+                We are currently syncing with the power grid or performing scheduled maintenance to keep your alerts accurate.
+            </p>
+            <div style="margin-top: 30px;">
+                <button onclick="window.location.reload()" class="btn" style="background: var(--dark-blue); color: white;">
+                    <i class="fas fa-sync"></i> Try Refreshing
+                </button>
+            </div>
+            <p style="margin-top: 20px; font-size: 0.8rem; color: #999;">
+                Error: Database Connection Interrupted
+            </p>
+        </div>
+    </div>
+</body>
+</html>
