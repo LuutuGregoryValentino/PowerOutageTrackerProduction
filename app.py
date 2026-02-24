@@ -49,10 +49,10 @@ CORS(app)
 def handle_db_error(e):
     print(f"Database/Server Error caught: {e}")
     return render_template('maintenance.html'), 503
-
 @app.app_context_processor
 def inject_now():
     return {'now': datetime.datetime.utcnow()}
+
 
 SMTP_SERVER = os.getenv('SMTP_SERVER')
 SMTP_PORT = int(os.getenv('SMTP_PORT')) 
