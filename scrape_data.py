@@ -8,7 +8,7 @@ import smtplib
 from email.message import EmailMessage
 
 R = 6371
-THRESHOLD_KM = 20
+THRESHOLD_KM = 10
 geolocator = Nominatim(user_agent="gregory_power_tracker_ug_contact_me_at_snowchildwolf@gmail.com")
 APIFYURL = os.getenv("APIFYURL")
 
@@ -77,14 +77,14 @@ def send_outage_email(recipient_email, outage_details, SENDER_EMAIL, SENDER_PASS
                     {outage_items_html}
 
                     <div style="text-align: center; margin-top: 30px;">
-                        <a href="https://uedcl-power-outage-tracker.onrender.com/" style="background-color: #F5B301; color: #1F2A44; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Live Tracker</a>
+                        <a href="https://uedcl-power-outage-tracker.onrender.com" style="background-color: #F5B301; color: #1F2A44; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Live Tracker</a>
                     </div>
                 </td>
             </tr>
             <tr>
                 <td style="background-color: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #999999;">
                     <p>This is an automated alert based on UEDCL public data.</p>
-                    <p>To manage your alerts or change your location, log in to your profile.</p>
+                    <p>To manage your alerts or change your location, or to stop receiving warning emails <strong>log in to your profile.</strong></p>
                 </td>
             </tr>
         </table>
